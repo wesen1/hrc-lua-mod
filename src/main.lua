@@ -146,7 +146,7 @@ end
 
 function onFlagAction(_actorClientNumber, _flagActionId)
 
-  if (_flagActionId == FA_SCORE) then
+  if (_flagActionId == FA_SCORE and getgamemode() == GM_CTF) then
     Ladders.addPointsToPlayerLadderScore("flags", _actorClientNumber, 1)
   end
 
