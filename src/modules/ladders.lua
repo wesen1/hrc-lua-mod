@@ -22,42 +22,36 @@ end
 
 local function loadAllLadderScores(_ladderName)
 
-  if (isValidLadderName(_ladderName)) then
-
-    -- Load the scores as a list in the format { <player name> => <score data>, ... }
-    local scores = cfg.totable(getConfigNameForLadder(_ladderName))
-    if (scores == nil) then
-      return {}
-    end
-
-    local sortedScores = {}
-    for playerName, scoreData in pairs(scores) do
-      table.insert(
-        sortedScores,
-        {
-          ["playerName"] = playerName,
-          ["points"] = tonumber(scoreData),
-          ["rank"] = -1
-        }
-      )
-    end
-
-    table.sort(
-      sortedScores,
-      function(_scoreA, _scoreB)
-        return _scoreA["points"] > _scoreB["points"]
-      end
-    )
-
-    for rank, score in ipairs(sortedScores) do
-      score["rank"] = rank
-    end
-
-    return sortedScores
-
-  else
+  -- Load the scores as a list in the format { <player name> => <score data>, ... }
+  local scores = cfg.totable(getConfigNameForLadder(_ladderName))
+  if (scores == nil) then
     return {}
   end
+
+  local sortedScores = {}
+  for playerName, scoreData in pairs(scores) do
+    table.insert(
+      sortedScores,
+      {
+        ["playerName"] = playerName,
+        ["points"] = tonumber(scoreData),
+        ["rank"] = -1
+      }
+    )
+  end
+
+  table.sort(
+    sortedScores,
+    function(_scoreA, _scoreB)
+      return _scoreA["points"] > _scoreB["points"]
+    end
+  )
+
+  for rank, score in ipairs(sortedScores) do
+    score["rank"] = rank
+  end
+
+  return sortedScores
 
 end
 
