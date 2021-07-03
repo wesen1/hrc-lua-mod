@@ -1,0 +1,11 @@
+version: "3"
+services:
+    lua-server:
+        image: wesen1/assaultcube-lua-server:1.2.0.2-local-lua
+        ports:
+            - "28763:28763/udp"
+            - "28764:28764/udp"
+        volumes:
+            - ./config:/ac-server/lua/config:rw
+            - ./src:/ac-server/lua/scripts:rw
+            - ./test-server-config/serverpwd.cfg:/ac-server/config/serverpwd.cfg
