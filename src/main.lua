@@ -92,6 +92,16 @@ local commands = {
           )
         end
 
+        if (#ladderScores == 0) then
+          table.insert(
+            ladderOutputRows,
+            {
+              "No scores",
+              " "
+            }
+          )
+        end
+
         table.insert(outputRows[1], ladderOutputRows)
 
       end
