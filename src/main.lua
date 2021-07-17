@@ -15,6 +15,8 @@ PLUGIN_VERSION = "0.1"
 --
 package.path = package.path .. ";lua/scripts/external/AC-ClientOutput-1.1.1/src/?.lua"
 
+package.path = package.path .. ";lua/scripts/external/md5.lua-1.1.0/?.lua"
+
 -- Configure AC-ClientOutput
 local ClientOutputFactory = require "AC-ClientOutput.ClientOutputFactory"
 ClientOutputFactory.getInstance():configure({
@@ -24,6 +26,8 @@ ClientOutputFactory.getInstance():configure({
 
 local Ladders = require "lua.scripts.modules.ladders"
 local Commands = require "lua.scripts.modules.commands"
+local Accounts = require "lua.scripts.modules.accounts"
+local PlayerStates = require "lua.scripts.modules.player-states"
 
 
 local ladders = {
@@ -48,6 +52,20 @@ local ladders = {
   }
 }
 
+local function isLoginAllowed(_playerName)
+
+  for clientNumber in players() do
+    if (getname(clientNumber) == _playerName and
+        PlayerStates.isLoggedIn(clientNumber)
+    ) then
+      return "Error: Account is already used by Player #" .. clientNumber
+    end
+  end
+
+  return true
+
+end
+
 local commands = {
   ["!blacklist"] = {
     ["level"] = Commands.LEVELS.ADMIN,
@@ -55,6 +73,74 @@ local commands = {
       clientprint(_executorClientNumber, "TODO: Blacklist " .. _ip .. " with reason " .. _reason)
     end
   },
+
+
+  ["!login"] = {
+    ["level"] = Commands.LEVELS.UNARMED,
+    ["execute"] = function(_executorClientNumber, _password)
+
+      if (PlayerStates.isLoggedIn(_executorClientNumber)) then
+        clientprint(_executorClientNumber, "Error: Already logged in")
+        return
+      end
+
+      local executorPlayerName = getname(_executorClientNumber)
+      local isLoginAllowedResult = isLoginAllowed(executorPlayerName)
+      if (isLoginAllowedResult ~= true) then
+        clientprint(_executorClientNumber, isLoginAllowedResult)
+        return
+      end
+
+
+      local loginResult = Accounts.tryLogin(
+        executorPlayerName,
+        _password
+      )
+
+      if (loginResult == true) then
+        PlayerStates.setLoggedIn(_executorClientNumber, true)
+        clientprint(_executorClientNumber, "Succesfully logged in")
+      else
+        clientprint(_executorClientNumber, "Error: " .. loginResult)
+      end
+
+    end
+  },
+
+  ["!logout"] = {
+    ["level"] = Commands.LEVELS.UNARMED,
+    ["execute"] = function(_executorClientNumber)
+
+      if (PlayerStates.isLoggedIn(_executorClientNumber)) then
+        PlayerStates.setLoggedIn(_executorClientNumber, false)
+        clientprint(_executorClientNumber, "Successfully logged out")
+      else
+        clientprint(_executorClientNumber, "Error: Not logged in")
+      end
+
+    end
+  },
+
+  ["!register"] = {
+    ["level"] = Commands.LEVELS.UNARMED,
+    ["execute"] = function(_executorClientNumber, _password)
+
+      local result = Accounts.tryRegister(
+        getip(_executorClientNumber),
+        getname(_executorClientNumber),
+        _password
+      )
+
+      if (result == true) then
+        PlayerStates.setLoggedIn(_executorClientNumber, true)
+        clientprint(_executorClientNumber, "Succesfully registered")
+      else
+        clientprint(_executorClientNumber, "Error: " .. result)
+      end
+
+    end
+  },
+
 
   ["!ladders"] = {
     ["level"] = Commands.LEVELS.UNARMED,
@@ -122,6 +208,31 @@ function onInit()
 
   logline(ACLOG_INFO, "Initializing commands ...")
   Commands.initializeCommands(commands)
+end
+
+
+function onPlayerConnect(_actorClientNumber)
+
+  local connectedPlayerName = getname(_actorClientNumber)
+  local isLoginAllowedResult = isLoginAllowed(connectedPlayerName)
+  if (isLoginAllowedResult ~= true) then
+    return
+  end
+
+  local autoLoginResult = Accounts.tryAutoLogin(
+    getip(_actorClientNumber),
+    connectedPlayerName
+  )
+
+  if (autoLoginResult == true) then
+    PlayerStates.setLoggedIn(_actorClientNumber, true)
+    clientprint(_actorClientNumber, "Successfully logged in")
+  end
+
+end
+
+function onPlayerDisconnect(_actorClientNumber, _disconnectReason)
+  PlayerStates.clear(_actorClientNumber)
 end
 
 
