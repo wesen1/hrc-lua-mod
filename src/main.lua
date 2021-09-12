@@ -99,7 +99,7 @@ local commands = {
 
       if (loginResult == true) then
         PlayerStates.setLoggedIn(_executorClientNumber, true)
-        clientprint(_executorClientNumber, "Succesfully logged in")
+        clientprint(_executorClientNumber, "Successfully logged in")
       else
         clientprint(_executorClientNumber, "Error: " .. loginResult)
       end
